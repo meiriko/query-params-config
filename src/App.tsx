@@ -21,6 +21,7 @@ import {
   otherConfig,
   partialOnBigConfig,
 } from "./query/queryDemoData";
+import { QueryTester } from "./query/QueryTester";
 
 const Link = ({ to, children, ...props }: { to: To; children: ReactNode }) => {
   const location = useLocation();
@@ -88,6 +89,7 @@ function HomeLinks() {
         Clear all
       </Button>
       <Link to="/">Home</Link>
+      {/* <Link to="/dbg">Dbg</Link> */}
       <Link to="/big">Big</Link>
       <Link to="/other">Other</Link>
       <Link to="/big/other">Big + Other</Link>
@@ -114,6 +116,7 @@ function App() {
       <HomeLinks />
       <Accordion w="full" allowMultiple as={VStack} align="start">
         <Routes>
+          <Route path="dbg" element={<QueryTester />} />
           <Route path="big" element={<BigParams />}>
             <Route path="other" element={<OtherParams />} />
             <Route path="partial" element={<PartialOnBigParams />} />
