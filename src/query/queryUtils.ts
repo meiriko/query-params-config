@@ -6,6 +6,8 @@ import {
   DecodedValueMap,
   encodeDelimitedArray,
   decodeDelimitedArray,
+  objectToSearchString,
+  encodeQueryParams,
 } from "use-query-params";
 
 type ExcludeNullable<T> = Exclude<T, undefined | null>;
@@ -231,5 +233,16 @@ export function useBuildQueryHelpers<T extends Record<string, any>>(
       Object.entries(query).map(([key, value]) => [removePrefix(key), value])
     );
   }, [query, removePrefix]);
-  return { query: queryWithoutPrefix, setQuery, helpers };
+  const harmonizedQuery = useMemo(() => {
+    const encodedQuery = encodeQueryParams(
+      config,
+      queryWithoutPrefix as Partial<DecodedValueMap<T>>
+    );
+    const sortedEncodedQuery = Object.fromEntries(
+      Object.entries(encodedQuery).sort(([a], [b]) => a.localeCompare(b))
+    );
+    return objectToSearchString(sortedEncodedQuery);
+  }, [queryWithoutPrefix, config]);
+
+  return { query: queryWithoutPrefix, setQuery, helpers, harmonizedQuery };
 }

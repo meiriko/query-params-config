@@ -195,7 +195,10 @@ export function QueryControls({
   arrayValues?: Record<string, string[]>;
   clearKeys?: string[];
 }) {
-  const { query, helpers } = useBuildQueryHelpers(config, prefix);
+  const { query, helpers, harmonizedQuery } = useBuildQueryHelpers(
+    config,
+    prefix
+  );
   const blocks = useMemo(
     () =>
       Object.keys(config).map((key) => {
@@ -280,7 +283,9 @@ export function QueryControls({
           title={JSON.stringify(query, null, 2)}
         >
           <AccordionIcon />
-          <Heading as="h4">{title}</Heading>
+          <Heading as="h4" title={harmonizedQuery}>
+            {title}
+          </Heading>
         </AccordionButton>
         <Button
           variant="solid"
