@@ -265,40 +265,58 @@ export function QueryControls({
   );
 
   return (
-    <VStack w="full" align="start" py={6} px={2} border="1px solid">
-      <Accordion w="full" allowMultiple as={VStack} align="start">
-        <HStack paddingInlineStart={4} spacing={10} mb={6}>
+    <AccordionItem
+      w="full"
+      as={VStack}
+      align="start"
+      px={2}
+      py={2}
+      border="1px solid"
+    >
+      <HStack paddingInlineStart={4} spacing={10} mb={6} w="full">
+        <AccordionButton
+          bg="gray.700"
+          w="full"
+          title={JSON.stringify(query, null, 2)}
+        >
+          <AccordionIcon />
           <Heading as="h4">{title}</Heading>
+        </AccordionButton>
+        <Button
+          variant="solid"
+          colorScheme="blue"
+          onClick={() => helpers.clear()}
+        >
+          Clear
+        </Button>
+        {clearKeys?.length ? (
           <Button
             variant="solid"
             colorScheme="blue"
-            onClick={() => helpers.clear()}
+            onClick={() => helpers.clear(clearKeys)}
           >
-            Clear
+            Clear [{clearKeys.join(",")}]
           </Button>
-          {clearKeys?.length ? (
-            <Button
-              variant="solid"
-              colorScheme="blue"
-              onClick={() => helpers.clear(clearKeys)}
-            >
-              Clear [{clearKeys.join(",")}]
-            </Button>
-          ) : undefined}
-        </HStack>
-        {blocks}
-        <AccordionItem w="full">
-          <AccordionButton bg="gray.700">
-            <HStack w="full" textAlign="start">
-              <Box w="286px">Query</Box>
-            </HStack>
-            <AccordionIcon marginInlineStart="auto" />
-          </AccordionButton>
-          <AccordionPanel as={VStack} w="full" align="start">
-            <Box as="pre">{JSON.stringify(query, null, 2)}</Box>
-          </AccordionPanel>
-        </AccordionItem>
-      </Accordion>
-    </VStack>
+        ) : undefined}
+      </HStack>
+      <Box w="full">
+        <AccordionPanel>
+          <Accordion w="full" allowMultiple as={VStack} align="start">
+            {blocks}
+            <AccordionItem w="full">
+              <AccordionButton bg="gray.700">
+                <HStack w="full" textAlign="start">
+                  <Box w="286px">Query</Box>
+                </HStack>
+                <AccordionIcon marginInlineStart="auto" />
+              </AccordionButton>
+              <AccordionPanel as={VStack} w="full" align="start">
+                <Box as="pre">{JSON.stringify(query, null, 2)}</Box>
+              </AccordionPanel>
+            </AccordionItem>
+          </Accordion>
+        </AccordionPanel>
+      </Box>
+    </AccordionItem>
   );
 }

@@ -1,5 +1,11 @@
 import { ReactNode } from "react";
-import { HStack, Button, VStack, useColorMode } from "@chakra-ui/react";
+import {
+  HStack,
+  Button,
+  VStack,
+  useColorMode,
+  Accordion,
+} from "@chakra-ui/react";
 import { QueryControls } from "./query/QueryControls";
 import {
   NavLink as BaseLink,
@@ -103,20 +109,22 @@ function MakeItDark() {
 
 function App() {
   return (
-    <VStack w="full" align="start">
+    <VStack w="full" align="start" p={4}>
       <MakeItDark />
       <HomeLinks />
-      <Routes>
-        <Route path="big" element={<BigParams />}>
-          <Route path="other" element={<OtherParams />} />
-          <Route path="partial" element={<PartialOnBigParams />} />
-        </Route>
-        <Route path="other" element={<OtherParams />}>
+      <Accordion w="full" allowMultiple as={VStack} align="start">
+        <Routes>
           <Route path="big" element={<BigParams />}>
+            <Route path="other" element={<OtherParams />} />
             <Route path="partial" element={<PartialOnBigParams />} />
           </Route>
-        </Route>
-      </Routes>
+          <Route path="other" element={<OtherParams />}>
+            <Route path="big" element={<BigParams />}>
+              <Route path="partial" element={<PartialOnBigParams />} />
+            </Route>
+          </Route>
+        </Routes>
+      </Accordion>
     </VStack>
   );
 }
