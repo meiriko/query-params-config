@@ -49,6 +49,7 @@ const RatingArrayPram = withDefault(toTypedArrayParam<RATING>("__"), [
 const BooleanWithDefault = withDefault(BooleanParam, false);
 
 export const bigConfig = {
+  ticks: NumberParam,
   x: NumberParam,
   name: StringParam,
   coords: ArrayParam,
@@ -58,8 +59,10 @@ export const bigConfig = {
 };
 
 export const partialOnBigConfig = {
+  ticks: NumberParam,
   name: StringParam,
   active: BooleanWithDefault,
+  count: NumberParam,
 };
 
 export const bigConfigValues = {

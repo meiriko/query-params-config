@@ -257,11 +257,13 @@ export function QueryControls({
   prefix,
   title = prefix,
   arrayValues,
+  clearKeys,
 }: {
   config: Record<string, any>;
   prefix?: string;
   title?: string;
   arrayValues?: Record<string, string[]>;
+  clearKeys?: string[];
 }) {
   const { query, helpers } = useBuildQueryHelpers(config, prefix);
   const blocks = useMemo(
@@ -338,6 +340,15 @@ export function QueryControls({
           <Button variant="solid" colorScheme="blue" onClick={helpers.clear}>
             Clear
           </Button>
+          {clearKeys?.length ? (
+            <Button
+              variant="solid"
+              colorScheme="blue"
+              onClick={() => helpers.clear(clearKeys)}
+            >
+              Clear [{clearKeys.join(",")}]
+            </Button>
+          ) : undefined}
         </HStack>
         {blocks}
         <AccordionItem w="full">

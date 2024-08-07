@@ -61,7 +61,7 @@ type FlatHelpers<T extends Record<string, QueryParamConfig<any>>> =
 
 type ParamsHelpers<T extends Record<string, QueryParamConfig<any>>> = {
   [K in keyof T]: ParamHelpers<T[K]>;
-} & FlatHelpers<T> & { clear: () => void };
+} & FlatHelpers<T> & { clear: (keys?: string[]) => void };
 
 type AnyHelper = ParamHelpers<QueryParamConfig<any>>;
 
@@ -197,9 +197,13 @@ export function useBuildQueryHelpers<T extends Record<string, any>>(
         ];
       }
     }) as [string, AnyHelper][];
-    const clear = () => {
+    const clear = (keys?: string[]) => {
       const emptyQuery = Object.fromEntries(
-        Object.keys(configWithPrefix).map((key) => [key, undefined])
+        Object.keys(configWithPrefix)
+          .filter((key) =>
+            keys?.length ? keys.includes(removePrefix(key)) : true
+          )
+          .map((key) => [key, undefined])
       );
       setQuery(emptyQuery as Partial<DecodedValueMap<T>>);
     };

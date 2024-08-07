@@ -1,8 +1,8 @@
 import { ReactNODE } from "react";
-import { Box, HStack, Button } from "@chakra-ui/react";
+import { Box, HStack, Button, VStack } from "@chakra-ui/react";
 import { QueryControls } from "./query/QueryDemo";
 import {
-  Link as BaseLink,
+  NavLink as BaseLink,
   To,
   Outlet,
   Route,
@@ -29,7 +29,14 @@ const Link = ({ to, children, ...props }: { to: To; children: ReactNODE }) => {
         };
 
   return (
-    <Button variant="outline" as={BaseLink} to={toWithSearchParams} {...props}>
+    <Button
+      variant="outline"
+      _activeLink={{ color: "blue.500" }}
+      as={BaseLink}
+      to={toWithSearchParams}
+      end
+      {...props}
+    >
       {children}
     </Button>
   );
@@ -42,6 +49,7 @@ function BigParams() {
         config={bigConfig}
         arrayValues={bigConfigValues}
         prefix="big"
+        clearKeys={["ticks", "x"]}
       />
       <Outlet />
     </>
@@ -67,14 +75,14 @@ function OtherParams() {
   );
 }
 
-function App() {
+function HomeLinks() {
   return (
-    <Box>
+    <VStack w="full" align="start">
       <HStack gap={4} p={4}>
         <Button variant="outline" as={BaseLink} to="/">
           Clear all
         </Button>
-        <Link to="/home">Home</Link>
+        <Link to="/">Home</Link>
         <Link to="/big">Big</Link>
         <Link to="/other">Other</Link>
         <Link to="/big/other">Big + Other</Link>
@@ -82,14 +90,24 @@ function App() {
         <Link to="/big/partial">Big + Partial</Link>
         <Link to="/other/big/partial">All</Link>
       </HStack>
+      <Outlet />
+    </VStack>
+  );
+}
+
+function App() {
+  return (
+    <Box>
       <Routes>
-        <Route path="big" element={<BigParams />}>
-          <Route path="other" element={<OtherParams />} />
-          <Route path="partial" element={<PartialOnBigParams />} />
-        </Route>
-        <Route path="other" element={<OtherParams />}>
+        <Route path="/" element={<HomeLinks />}>
           <Route path="big" element={<BigParams />}>
+            <Route path="other" element={<OtherParams />} />
             <Route path="partial" element={<PartialOnBigParams />} />
+          </Route>
+          <Route path="other" element={<OtherParams />}>
+            <Route path="big" element={<BigParams />}>
+              <Route path="partial" element={<PartialOnBigParams />} />
+            </Route>
           </Route>
         </Route>
       </Routes>
