@@ -13,79 +13,9 @@ import {
   AccordionIcon,
   Heading,
 } from "@chakra-ui/react";
-import {
-  StringParam,
-  NumberParam,
-  ArrayParam,
-  withDefault,
-} from "use-query-params";
-import {
-  BooleanParam,
-  toTypedArrayParam,
-  useBuildQueryHelpers,
-} from "./queryUtils";
+import { NumberParam, ArrayParam, QueryParamConfig } from "use-query-params";
+import { BooleanParam, ParamHelpers, useBuildQueryHelpers } from "./queryUtils";
 import { useMemo } from "react";
-
-type PAT =
-  | "ACTIVE"
-  | "INACTIVE"
-  | "MERGED"
-  | "NOT_MERGED"
-  | "HAS_RECIPE"
-  | "NO_RECIPE"
-  | "COMPONENT_OF"
-  | "NOT_COMPONENT_OF"
-  | "VISIBLE"
-  | "NOT_VISIBLE"
-  | "FRACTIONAL"
-  | "NOT_FRACTIONAL";
-
-type RATING = "HORRIBLE" | "BAD" | "OK" | "GOOD" | "GREAT";
-
-const coords = ["x", "yy", "zzz"];
-const pats: PAT[] = [
-  "ACTIVE",
-  "INACTIVE",
-  "MERGED",
-  "NOT_MERGED",
-  "HAS_RECIPE",
-  "NO_RECIPE",
-  "COMPONENT_OF",
-  "NOT_COMPONENT_OF",
-  "VISIBLE",
-  "NOT_VISIBLE",
-  "FRACTIONAL",
-  "NOT_FRACTIONAL",
-];
-const ratings: RATING[] = ["HORRIBLE", "BAD", "OK", "GOOD", "GREAT"];
-
-const CommaArrayParam = toTypedArrayParam<PAT>("__");
-const RatingArrayPram = withDefault(toTypedArrayParam<RATING>("__"), [
-  "GREAT",
-  "HORRIBLE",
-]);
-
-const BooleanWithDefault = withDefault(BooleanParam, false);
-
-const defaultConfig = {
-  x: NumberParam,
-  name: StringParam,
-  coords: ArrayParam,
-  active: BooleanWithDefault,
-  pat: CommaArrayParam,
-  rating: RatingArrayPram,
-};
-const defaultConfigValues = {
-  pat: pats,
-  rating: ratings,
-  coords,
-};
-
-const otherConfig = {
-  count: NumberParam,
-  completed: BooleanWithDefault,
-  active: BooleanWithDefault,
-};
 
 const ArrayCotrols = ({
   name,
@@ -94,7 +24,7 @@ const ArrayCotrols = ({
   values,
 }: {
   name: string;
-  value: string;
+  value: string[];
   helpers: {
     set: (value?: unknown[]) => void;
     add: (value: unknown) => void;
@@ -158,7 +88,7 @@ const BooleanControls = ({
   name: string;
   value?: boolean;
   helpers: {
-    set: (value: boolean) => void;
+    set: (value?: boolean) => void;
     toggle: () => void;
   };
 }) => {
@@ -202,7 +132,7 @@ const NumberControls = ({
 }: {
   name: string;
   value: number;
-  helpers: { set: (value: number) => void };
+  helpers: { set: (value?: number) => void };
 }) => {
   return (
     <Box
@@ -232,7 +162,7 @@ const ValueControls = ({
 }: {
   name: string;
   value: string;
-  set: (v: string) => void;
+  set: (v?: string) => void;
 }) => {
   return (
     <Box
@@ -278,7 +208,9 @@ export function QueryControls({
                 key={key}
                 name={key}
                 value={query[key]}
-                helpers={helpers[key]}
+                helpers={
+                  helpers[key] as ParamHelpers<QueryParamConfig<unknown[]>>
+                }
                 values={values}
               />
             );
@@ -306,7 +238,7 @@ export function QueryControls({
               key={key}
               name={key}
               value={query[key]}
-              helpers={helpers[key]}
+              helpers={helpers[key] as ParamHelpers<QueryParamConfig<boolean>>}
             />
           );
         } else if (value === NumberParam) {
@@ -337,7 +269,11 @@ export function QueryControls({
       <Accordion w="full" allowMultiple as={VStack} align="start">
         <HStack paddingInlineStart={4} spacing={10} mb={6}>
           <Heading as="h4">{title}</Heading>
-          <Button variant="solid" colorScheme="blue" onClick={helpers.clear}>
+          <Button
+            variant="solid"
+            colorScheme="blue"
+            onClick={() => helpers.clear()}
+          >
             Clear
           </Button>
           {clearKeys?.length ? (

@@ -31,12 +31,12 @@ type IsArrayParam<T extends QueryParamConfig<any>> = T extends QueryParamConfig<
     : false
   : false;
 
-type ParamHelpers<T extends QueryParamConfig<any>> =
+export type ParamHelpers<T extends QueryParamConfig<any>> =
   IsArrayParam<T> extends true
     ? {
         [P in "set" | "add" | "remove" | "toggle"]: P extends "set"
           ? (value?: ParamType<T>[]) => void
-          : (value: ParamType<T>) => void;
+          : (value?: ParamType<T>) => void;
       }
     : ParamType<T> extends boolean
     ? {
