@@ -1,11 +1,10 @@
 import {
   ArrayParam,
-  BooleanParam,
   NumberParam,
   StringParam,
   withDefault,
 } from "use-query-params";
-import { toTypedArrayParam } from "./queryUtils";
+import { BooleanParam, toTypedArrayParam } from "./queryUtils";
 
 type PAT =
   | "ACTIVE"
