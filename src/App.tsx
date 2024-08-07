@@ -1,6 +1,6 @@
-import { ReactNODE } from "react";
+import { ReactNode } from "react";
 import { Box, HStack, Button, VStack } from "@chakra-ui/react";
-import { QueryControls } from "./query/QueryDemo";
+import { QueryControls } from "./query/QueryControls";
 import {
   NavLink as BaseLink,
   To,
@@ -16,7 +16,7 @@ import {
   partialOnBigConfig,
 } from "./query/queryDemoData";
 
-const Link = ({ to, children, ...props }: { to: To; children: ReactNODE }) => {
+const Link = ({ to, children, ...props }: { to: To; children: ReactNode }) => {
   const location = useLocation();
   const searchParams = location.search;
 

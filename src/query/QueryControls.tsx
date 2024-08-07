@@ -366,20 +366,3 @@ export function QueryControls({
     </VStack>
   );
 }
-
-export const QueryDemo = () => {
-  return (
-    <VStack w="full" align="start">
-      <QueryControls
-        config={defaultConfig}
-        arrayValues={defaultConfigValues}
-        prefix="miro"
-      />
-      <QueryControls
-        config={otherConfig}
-        // arrayValues={defaultConfigValues}
-        prefix="john"
-      />
-    </VStack>
-  );
-};
