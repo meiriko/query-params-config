@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Box, HStack, Button, VStack } from "@chakra-ui/react";
+import { HStack, Button, VStack, useColorMode } from "@chakra-ui/react";
 import { QueryControls } from "./query/QueryControls";
 import {
   NavLink as BaseLink,
@@ -77,41 +77,47 @@ function OtherParams() {
 
 function HomeLinks() {
   return (
-    <VStack w="full" align="start">
-      <HStack gap={4} p={4}>
-        <Button variant="outline" as={BaseLink} to="/">
-          Clear all
-        </Button>
-        <Link to="/">Home</Link>
-        <Link to="/big">Big</Link>
-        <Link to="/other">Other</Link>
-        <Link to="/big/other">Big + Other</Link>
-        <Link to="/other/big">Other + Big</Link>
-        <Link to="/big/partial">Big + Partial</Link>
-        <Link to="/other/big/partial">All</Link>
-      </HStack>
-      <Outlet />
-    </VStack>
+    <HStack gap={4} p={4}>
+      <Button variant="outline" as={BaseLink} to="/">
+        Clear all
+      </Button>
+      <Link to="/">Home</Link>
+      <Link to="/big">Big</Link>
+      <Link to="/other">Other</Link>
+      <Link to="/big/other">Big + Other</Link>
+      <Link to="/other/big">Other + Big</Link>
+      <Link to="/big/partial">Big + Partial</Link>
+      <Link to="/other/big/partial">All</Link>
+    </HStack>
   );
+}
+
+function MakeItDark() {
+  const { colorMode, toggleColorMode } = useColorMode();
+  return colorMode === "light" ? (
+    <Button onClick={toggleColorMode}>
+      Toggle {colorMode === "light" ? "Dark" : "Light"}
+    </Button>
+  ) : undefined;
 }
 
 function App() {
   return (
-    <Box>
+    <VStack w="full" align="start">
+      <MakeItDark />
+      <HomeLinks />
       <Routes>
-        <Route path="/" element={<HomeLinks />}>
+        <Route path="big" element={<BigParams />}>
+          <Route path="other" element={<OtherParams />} />
+          <Route path="partial" element={<PartialOnBigParams />} />
+        </Route>
+        <Route path="other" element={<OtherParams />}>
           <Route path="big" element={<BigParams />}>
-            <Route path="other" element={<OtherParams />} />
             <Route path="partial" element={<PartialOnBigParams />} />
-          </Route>
-          <Route path="other" element={<OtherParams />}>
-            <Route path="big" element={<BigParams />}>
-              <Route path="partial" element={<PartialOnBigParams />} />
-            </Route>
           </Route>
         </Route>
       </Routes>
-    </Box>
+    </VStack>
   );
 }
 
