@@ -46,18 +46,16 @@ function useSimpleQuery() {
       console.log(">>> simpleQuery");
       return Date.now() % 100;
     },
-    // staleTime: 24 * 60 * 60 * 1000,
+    staleTime: 24 * 60 * 60 * 1000,
   });
 }
 
-function SimpleDisplay({ count }: { count: number }) {
+function SimpleDisplay() {
   const simpleResult = useSimpleQuery();
 
   return (
     <VStack w="full" align="start">
-      <Box>
-        simpleResult: {simpleResult?.data}, {count}
-      </Box>
+      <Box>simpleResult: {simpleResult?.data}</Box>
     </VStack>
   );
 }
@@ -65,14 +63,12 @@ function SimpleDisplay({ count }: { count: number }) {
 export function QueryTester() {
   const [idx, setIdx] = useState(0);
   const result = useQueryTester({ ...configs[idx], extraParam: 333 });
-  const [tick, setTick] = useState(0);
   const queryClient = useQueryClient();
 
   if (Math.random()) {
     return (
       <VStack w="full" align="start">
-        <SimpleDisplay count={tick} />
-        <Box>tick: {tick}</Box>
+        <SimpleDisplay />
         <Button
           onClick={() => {
             queryClient.invalidateQueries({
@@ -85,7 +81,6 @@ export function QueryTester() {
               //   return true;
               // },
             });
-            setTick((prev) => prev + 1);
           }}
         >
           invalidate
