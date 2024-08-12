@@ -14,7 +14,12 @@ import {
   Heading,
 } from "@chakra-ui/react";
 import { NumberParam, ArrayParam, QueryParamConfig } from "use-query-params";
-import { BooleanParam, ParamHelpers, useBuildQueryHelpers } from "./queryUtils";
+import {
+  BooleanParam,
+  InitTypes,
+  ParamHelpers,
+  useBuildQueryHelpers,
+} from "./queryUtils";
 import { useMemo } from "react";
 
 const ArrayCotrols = ({
@@ -185,17 +190,19 @@ const ValueControls = ({
 export function QueryControls({
   config,
   prefix,
+  init,
   title = prefix,
   arrayValues,
   clearKeys,
 }: {
   config: Record<string, any>;
   prefix?: string;
+  init?: InitTypes<typeof config>;
   title?: string;
   arrayValues?: Record<string, string[]>;
   clearKeys?: string[];
 }) {
-  const { query, helpers } = useBuildQueryHelpers(config, prefix);
+  const { query, helpers } = useBuildQueryHelpers(config, prefix, init);
   const blocks = useMemo(
     () =>
       Object.keys(config).map((key) => {

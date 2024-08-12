@@ -23,6 +23,11 @@ type ParamType<T extends QueryParamConfig<any>> = T extends QueryParamConfig<
     : ExcludeNullable<I>
   : never;
 
+type UpdateParam<T extends QueryParamConfig<any>> = IsArrayParam<T> extends true
+  ? ParamType<T>[]
+  : ParamType<T>;
+type UpdateFN<T> = (value: T) => T;
+
 type IsArrayParam<T extends QueryParamConfig<any>> = T extends QueryParamConfig<
   infer D1
 >
@@ -32,7 +37,7 @@ type IsArrayParam<T extends QueryParamConfig<any>> = T extends QueryParamConfig<
   : false;
 
 export type ParamHelpers<T extends QueryParamConfig<any>> =
-  IsArrayParam<T> extends true
+  (IsArrayParam<T> extends true
     ? {
         [P in "set" | "add" | "remove" | "toggle"]: P extends "set"
           ? (value?: ParamType<T>[]) => void
@@ -46,7 +51,16 @@ export type ParamHelpers<T extends QueryParamConfig<any>> =
       }
     : {
         set: (value?: ParamType<T>) => void;
-      };
+      }) & {
+    update: (updateFN: UpdateFN<UpdateParam<T>>) => void;
+  };
+
+export type InitTypes<T extends Record<string, QueryParamConfig<any>>> =
+  Partial<{
+    [K in keyof T]: IsArrayParam<T[K]> extends true
+      ? ParamType<T[K]>[]
+      : ParamType<T[K]>;
+  }>;
 
 type FlatHelpers<T extends Record<string, QueryParamConfig<any>>> =
   UnionToIntersection<
@@ -65,13 +79,17 @@ type ParamsHelpers<T extends Record<string, QueryParamConfig<any>>> = {
 
 type AnyHelper = ParamHelpers<QueryParamConfig<any>>;
 
-export const BooleanParam: QueryParamConfig<boolean, boolean> = {
-  encode(value: boolean) {
+export const BooleanParam: QueryParamConfig<boolean | undefined> = {
+  encode(value: boolean | undefined) {
     return value ? "true" : "false";
   },
 
   decode(strValue: string | (string | null)[] | null | undefined) {
-    return (strValue ?? "false").toString() !== "false";
+    return strValue?.toString() === "true"
+      ? true
+      : strValue
+      ? false
+      : undefined;
   },
 };
 
@@ -88,7 +106,8 @@ export function toTypedArrayParam<T extends string>(delimiter = "_") {
 
 export function useBuildQueryHelpers<T extends Record<string, any>>(
   config: T,
-  prefix?: string
+  prefix?: string,
+  init?: InitTypes<T>
 ) {
   const removePrefix = useMemo(() => {
     if (prefix) {
@@ -120,12 +139,21 @@ export function useBuildQueryHelpers<T extends Record<string, any>>(
         (configWithPrefix[key] as any)?.["isArray"]
       ) {
         const helpers = {
-          set: (value?: unknown[]) =>
-            setQuery({
-              [key]: value?.length
-                ? Array.from(new Set(value)).sort()
-                : undefined,
-            } as Partial<DecodedValueMap<T>>),
+          set: (value?: unknown[] | UpdateFN<unknown[]>) => {
+            setQuery((prevQuery) => {
+              if (typeof value === "function") {
+                return { [key]: value(prevQuery?.[key]) } as Partial<
+                  DecodedValueMap<T>
+                >;
+              } else {
+                return {
+                  [key]: value?.length
+                    ? Array.from(new Set(value)).sort()
+                    : undefined,
+                };
+              }
+            });
+          },
           add: (value: unknown) =>
             setQuery((prevQuery) => {
               const oldValue = (prevQuery?.[key] ?? []) as unknown[];
@@ -178,8 +206,17 @@ export function useBuildQueryHelpers<T extends Record<string, any>>(
         return [
           removePrefix(key),
           {
-            set: (value?: boolean) =>
-              setQuery({ [key]: value } as Partial<DecodedValueMap<T>>),
+            set: (value?: boolean | UpdateFN<boolean>) => {
+              setQuery((prevQuery) => {
+                if (typeof value === "function") {
+                  return { [key]: value(prevQuery?.[key]) } as Partial<
+                    DecodedValueMap<T>
+                  >;
+                } else {
+                  return { [key]: value } as Partial<DecodedValueMap<T>>;
+                }
+              });
+            },
             toggle: () =>
               setQuery(
                 (prevQuery) =>
@@ -191,8 +228,15 @@ export function useBuildQueryHelpers<T extends Record<string, any>>(
         return [
           removePrefix(key),
           {
-            set: (value?: unknown) =>
-              setQuery({ [key]: value } as Partial<DecodedValueMap<T>>),
+            set: (value?: unknown | UpdateFN<unknown>) => {
+              setQuery((prevQuery) => {
+                if (typeof value === "function") {
+                  return { [key]: value(prevQuery?.[key]) };
+                } else {
+                  return { [key]: value };
+                }
+              });
+            },
           },
         ];
       }
@@ -224,8 +268,20 @@ export function useBuildQueryHelpers<T extends Record<string, any>>(
       ...helpersWithExplicityEntries,
       ["clear", clear],
     ]) as ParamsHelpers<T>;
+    if (init) {
+      setTimeout(() => {
+        Object.entries(init)
+          .filter(([, value]) => value !== undefined)
+          .forEach(([key, value]) => {
+            const setFN = helpers[key].set as (value: unknown) => unknown;
+            setFN((prev: unknown) => {
+              return prev || value;
+            });
+          });
+      }, 0);
+    }
     return helpers;
-  }, [setQuery, configWithPrefix, removePrefix]);
+  }, [setQuery, configWithPrefix, removePrefix, init]);
   const queryWithoutPrefix = useMemo(() => {
     return Object.fromEntries(
       Object.entries(query).map(([key, value]) => [removePrefix(key), value])

@@ -4,7 +4,7 @@ import {
   StringParam,
   withDefault,
 } from "use-query-params";
-import { BooleanParam, toTypedArrayParam } from "./queryUtils";
+import { BooleanParam, InitTypes, toTypedArrayParam } from "./queryUtils";
 
 type PAT =
   | "ACTIVE"
@@ -46,15 +46,24 @@ const RatingArrayPram = withDefault(toTypedArrayParam<RATING>("__"), [
 ]);
 
 const BooleanWithDefault = withDefault(BooleanParam, false);
+const BooleanWithDefaultTrue = withDefault(BooleanParam, true);
 
 export const bigConfig = {
   ticks: NumberParam,
   x: NumberParam,
   name: StringParam,
+  miroName: withDefault(StringParam, "miro"),
   coords: ArrayParam,
   active: BooleanWithDefault,
+  trueByDefault: BooleanWithDefaultTrue,
   pat: CommaArrayParam,
   rating: RatingArrayPram,
+};
+
+export const bigInit: InitTypes<typeof bigConfig> = {
+  x: 33,
+  name: "n-i",
+  pat: ["ACTIVE", "INACTIVE"],
 };
 
 export const partialOnBigConfig = {

@@ -18,6 +18,7 @@ import {
 import {
   bigConfig,
   bigConfigValues,
+  bigInit,
   otherConfig,
   partialOnBigConfig,
 } from "./query/queryDemoData";
@@ -57,6 +58,7 @@ function BigParams() {
         arrayValues={bigConfigValues}
         prefix="big"
         clearKeys={["ticks", "x"]}
+        init={bigInit}
       />
       <Outlet />
     </>
