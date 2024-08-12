@@ -247,7 +247,7 @@ export function useBuildQueryHelpers<T extends Record<string, any>>(
           .filter((key) =>
             keys?.length ? keys.includes(removePrefix(key)) : true
           )
-          .map((key) => [key, undefined])
+          .map((key) => [key, configWithPrefix[key].default])
       );
       setQuery(emptyQuery as Partial<DecodedValueMap<T>>);
     };
