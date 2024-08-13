@@ -23,9 +23,6 @@ type ParamType<T extends QueryParamConfig<any>> = T extends QueryParamConfig<
     : ExcludeNullable<I>
   : never;
 
-type UpdateParam<T extends QueryParamConfig<any>> = IsArrayParam<T> extends true
-  ? ParamType<T>[]
-  : ParamType<T>;
 type UpdateFN<T> = (value: T) => T;
 
 type IsArrayParam<T extends QueryParamConfig<any>> = T extends QueryParamConfig<
@@ -37,7 +34,7 @@ type IsArrayParam<T extends QueryParamConfig<any>> = T extends QueryParamConfig<
   : false;
 
 export type ParamHelpers<T extends QueryParamConfig<any>> =
-  (IsArrayParam<T> extends true
+  IsArrayParam<T> extends true
     ? {
         [P in "set" | "add" | "remove" | "toggle"]: P extends "set"
           ? (value?: ParamType<T>[]) => void
@@ -51,9 +48,7 @@ export type ParamHelpers<T extends QueryParamConfig<any>> =
       }
     : {
         set: (value?: ParamType<T>) => void;
-      }) & {
-    update: (updateFN: UpdateFN<UpdateParam<T>>) => void;
-  };
+      };
 
 export type InitTypes<T extends Record<string, QueryParamConfig<any>>> =
   Partial<{
@@ -104,7 +99,7 @@ export function toTypedArrayParam<T extends string>(delimiter = "_") {
   };
 }
 
-export function useBuildQueryHelpers<T extends Record<string, any>>(
+export function useQueryParamHelpers<T extends Record<string, any>>(
   config: T,
   prefix?: string,
   init?: InitTypes<T>

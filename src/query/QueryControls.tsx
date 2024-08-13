@@ -18,7 +18,7 @@ import {
   BooleanParam,
   InitTypes,
   ParamHelpers,
-  useBuildQueryHelpers,
+  useQueryParamHelpers,
 } from "./queryUtils";
 import { useMemo } from "react";
 
@@ -202,7 +202,7 @@ export function QueryControls({
   arrayValues?: Record<string, string[]>;
   clearKeys?: string[];
 }) {
-  const { query, helpers } = useBuildQueryHelpers(config, prefix, init);
+  const { query, helpers } = useQueryParamHelpers(config, prefix, init);
   const blocks = useMemo(
     () =>
       Object.keys(config).map((key) => {
