@@ -18,6 +18,7 @@ import {
   BooleanParam,
   InitTypes,
   ParamHelpers,
+  useDeferredQueryParamHelpers,
   useQueryParamHelpers,
 } from "./queryUtils";
 import { useMemo } from "react";
@@ -194,6 +195,7 @@ export function QueryControls({
   title = prefix,
   arrayValues,
   clearKeys,
+  commitMode = false,
 }: {
   config: Record<string, any>;
   prefix?: string;
@@ -201,8 +203,21 @@ export function QueryControls({
   title?: string;
   arrayValues?: Record<string, string[]>;
   clearKeys?: string[];
+  commitMode?: boolean;
 }) {
-  const { query, helpers } = useQueryParamHelpers(config, prefix, init);
+  const { query: synchedQuery, helpers: synchedHelpers } = useQueryParamHelpers(
+    config,
+    prefix,
+    init
+  );
+  const {
+    query: asyncQuery,
+    helpers: asyncHelpers,
+    applyQuery,
+  } = useDeferredQueryParamHelpers(config, prefix, init);
+  const query = commitMode ? asyncQuery : synchedQuery;
+  const helpers = commitMode ? asyncHelpers : synchedHelpers;
+
   const blocks = useMemo(
     () =>
       Object.keys(config).map((key) => {
@@ -296,6 +311,7 @@ export function QueryControls({
         >
           Clear
         </Button>
+        {commitMode ? <Button onClick={applyQuery}>Do it</Button> : undefined}
         {clearKeys?.length ? (
           <Button
             variant="solid"

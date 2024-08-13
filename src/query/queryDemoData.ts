@@ -56,6 +56,7 @@ export const bigConfig = {
   coords: ArrayParam,
   active: BooleanWithDefault,
   trueByDefault: BooleanWithDefaultTrue,
+  justBool: BooleanParam,
   pat: CommaArrayParam,
   rating: RatingArrayPram,
 };

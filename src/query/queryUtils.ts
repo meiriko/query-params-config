@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   useQueryParams,
   ArrayParam,
@@ -76,7 +76,13 @@ type AnyHelper = ParamHelpers<QueryParamConfig<any>>;
 
 export const BooleanParam: QueryParamConfig<boolean | undefined> = {
   encode(value: boolean | undefined) {
-    return value ? "true" : "false";
+    // if (this.default !== undefined) {
+    if ((value ?? this.default) === this.default) {
+      return undefined;
+    }
+    // }
+
+    return value ?? this.default ? "true" : "false";
   },
 
   decode(strValue: string | (string | null)[] | null | undefined) {
@@ -99,47 +105,23 @@ export function toTypedArrayParam<T extends string>(delimiter = "_") {
   };
 }
 
-export function useQueryParamHelpers<T extends Record<string, any>>(
-  config: T,
-  prefix?: string,
-  init?: InitTypes<T>
+function useHelpers<T extends Record<string, any>>(
+  prefixedConfig: T,
+  setQuery: (prev: Record<string, any>) => any,
+  removePrefix: (key: string) => string,
+  init?: Record<string, any>
 ) {
-  const removePrefix = useMemo(() => {
-    if (prefix) {
-      const removePrefixRE = new RegExp(`^${prefix}\\.`);
-      return (key: string) => key.replace(removePrefixRE, "");
-    } else {
-      return (key: string) => key;
-    }
-  }, [prefix]);
-
-  const configWithPrefix = useMemo(() => {
-    if (prefix) {
-      return Object.fromEntries(
-        Object.entries(config).map(([key, value]) => [
-          `${prefix}.${key}`,
-          value,
-        ])
-      );
-    } else {
-      return config;
-    }
-  }, [config, prefix]);
-
-  const [query, setQuery] = useQueryParams(configWithPrefix);
-  const helpers = useMemo(() => {
-    const helpersEntries = Object.keys(configWithPrefix).map((key) => {
+  return useMemo(() => {
+    const helpersEntries = Object.keys(prefixedConfig).map((key) => {
       if (
-        configWithPrefix[key] === ArrayParam ||
-        (configWithPrefix[key] as any)?.["isArray"]
+        prefixedConfig[key] === ArrayParam ||
+        (prefixedConfig[key] as any)?.["isArray"]
       ) {
         const helpers = {
           set: (value?: unknown[] | UpdateFN<unknown[]>) => {
-            setQuery((prevQuery) => {
+            setQuery((prevQuery: Pick<T, typeof key>) => {
               if (typeof value === "function") {
-                return { [key]: value(prevQuery?.[key]) } as Partial<
-                  DecodedValueMap<T>
-                >;
+                return { [key]: value(prevQuery?.[key]) };
               } else {
                 return {
                   [key]: value?.length
@@ -150,20 +132,18 @@ export function useQueryParamHelpers<T extends Record<string, any>>(
             });
           },
           add: (value: unknown) =>
-            setQuery((prevQuery) => {
+            setQuery((prevQuery: Pick<T, typeof key>) => {
               const oldValue = (prevQuery?.[key] ?? []) as unknown[];
-              if (oldValue === configWithPrefix[key]?.default) {
+              if (oldValue === prefixedConfig[key]?.default) {
                 return { [key]: [value] } as Partial<DecodedValueMap<T>>;
               } else if (oldValue.includes(value)) {
                 return prevQuery;
               } else {
-                return { [key]: [...oldValue, value].sort() } as Partial<
-                  DecodedValueMap<T>
-                >;
+                return { [key]: [...oldValue, value].sort() };
               }
             }),
           remove: (value: unknown) =>
-            setQuery((prevQuery) => {
+            setQuery((prevQuery: Pick<T, typeof key>) => {
               if (!prevQuery?.[key]?.includes(value)) {
                 return prevQuery;
               }
@@ -172,51 +152,46 @@ export function useQueryParamHelpers<T extends Record<string, any>>(
               );
               return {
                 [key]: newValue?.length ? newValue : undefined,
-              } as Partial<DecodedValueMap<T>>;
+              };
             }),
           toggle: (value: unknown) =>
-            setQuery((prevQuery) => {
+            setQuery((prevQuery: Pick<T, typeof key>) => {
               const oldValue = (prevQuery?.[key] ?? []) as unknown[];
-              if (oldValue === configWithPrefix[key]?.default) {
-                return { [key]: [value] } as Partial<DecodedValueMap<T>>;
+              if (oldValue === prefixedConfig[key]?.default) {
+                return { [key]: [value] };
               } else if (oldValue?.includes(value)) {
                 return {
                   [key]:
                     oldValue.length > 1
                       ? oldValue.filter((item: unknown) => item !== value)
                       : undefined,
-                } as Partial<DecodedValueMap<T>>;
+                };
               } else {
-                return { [key]: [...oldValue, value].sort() } as Partial<
-                  DecodedValueMap<T>
-                >;
+                return { [key]: [...oldValue, value].sort() };
               }
             }),
         };
         return [removePrefix(key), helpers];
       } else if (
-        configWithPrefix[key] === BooleanParam ||
-        typeof configWithPrefix[key].default === "boolean"
+        prefixedConfig[key] === BooleanParam ||
+        typeof prefixedConfig[key].default === "boolean"
       ) {
         return [
           removePrefix(key),
           {
             set: (value?: boolean | UpdateFN<boolean>) => {
-              setQuery((prevQuery) => {
+              setQuery((prevQuery: Pick<T, typeof key>) => {
                 if (typeof value === "function") {
-                  return { [key]: value(prevQuery?.[key]) } as Partial<
-                    DecodedValueMap<T>
-                  >;
+                  return { [key]: value(prevQuery?.[key]) };
                 } else {
-                  return { [key]: value } as Partial<DecodedValueMap<T>>;
+                  return { [key]: value };
                 }
               });
             },
             toggle: () =>
-              setQuery(
-                (prevQuery) =>
-                  ({ [key]: !prevQuery?.[key] } as Partial<DecodedValueMap<T>>)
-              ),
+              setQuery((prevQuery: Pick<T, typeof key>) => ({
+                [key]: !prevQuery?.[key],
+              })),
           },
         ];
       } else {
@@ -224,7 +199,7 @@ export function useQueryParamHelpers<T extends Record<string, any>>(
           removePrefix(key),
           {
             set: (value?: unknown | UpdateFN<unknown>) => {
-              setQuery((prevQuery) => {
+              setQuery((prevQuery: Pick<T, typeof key>) => {
                 if (typeof value === "function") {
                   return { [key]: value(prevQuery?.[key]) };
                 } else {
@@ -238,13 +213,13 @@ export function useQueryParamHelpers<T extends Record<string, any>>(
     }) as [string, AnyHelper][];
     const clear = (keys?: string[]) => {
       const emptyQuery = Object.fromEntries(
-        Object.keys(configWithPrefix)
+        Object.keys(prefixedConfig)
           .filter((key) =>
             keys?.length ? keys.includes(removePrefix(key)) : true
           )
-          .map((key) => [key, configWithPrefix[key].default])
+          .map((key) => [key, prefixedConfig[key].default])
       );
-      setQuery(emptyQuery as Partial<DecodedValueMap<T>>);
+      setQuery(emptyQuery);
     };
     const explicitHelpersEntries = helpersEntries
       .map(([key, helpers]) => {
@@ -276,7 +251,43 @@ export function useQueryParamHelpers<T extends Record<string, any>>(
       }, 0);
     }
     return helpers;
-  }, [setQuery, configWithPrefix, removePrefix, init]);
+  }, [setQuery, prefixedConfig, removePrefix, init]);
+}
+
+export function useQueryParamHelpers<T extends Record<string, any>>(
+  config: T,
+  prefix?: string,
+  init?: InitTypes<T>
+) {
+  const removePrefix = useMemo(() => {
+    if (prefix) {
+      const removePrefixRE = new RegExp(`^${prefix}\\.`);
+      return (key: string) => key.replace(removePrefixRE, "");
+    } else {
+      return (key: string) => key;
+    }
+  }, [prefix]);
+
+  const prefixedConfig = useMemo(() => {
+    if (prefix) {
+      return Object.fromEntries(
+        Object.entries(config).map(([key, value]) => [
+          `${prefix}.${key}`,
+          value,
+        ])
+      );
+    } else {
+      return config;
+    }
+  }, [config, prefix]);
+
+  const [query, setQuery] = useQueryParams(prefixedConfig);
+  const helpers = useHelpers(
+    prefixedConfig,
+    setQuery,
+    removePrefix,
+    init
+  ) as ParamsHelpers<T>;
   const queryWithoutPrefix = useMemo(() => {
     return Object.fromEntries(
       Object.entries(query).map(([key, value]) => [removePrefix(key), value])
@@ -294,4 +305,92 @@ export function useQueryParamHelpers<T extends Record<string, any>>(
   // }, [queryWithoutPrefix, config]);
 
   return { query: queryWithoutPrefix, setQuery, helpers };
+}
+
+function getInit(
+  config: Record<string, QueryParamConfig<any>>,
+  init?: Record<string, any>
+) {
+  return Object.fromEntries(
+    Object.entries(config).map(([key, value]) => [
+      key,
+      init?.[key] || value?.default,
+    ])
+  );
+}
+
+const selfMapper = (key: string) => key;
+
+function withoutDefaults(
+  query: Record<string, any>,
+  config: Record<string, QueryParamConfig<any>>
+) {
+  return Object.fromEntries(
+    Object.entries(query).map(([key, value]) => [
+      key,
+      value !== config[key].default ? value : undefined,
+    ])
+  );
+}
+
+export function useDeferredQueryParamHelpers<T extends Record<string, any>>(
+  config: T,
+  prefix?: string,
+  init?: InitTypes<T>
+) {
+  const [query, setQueryBase] = useState(getInit(config, init));
+  const prefixedConfig = useMemo(() => {
+    return prefix
+      ? Object.fromEntries(
+          Object.entries(config).map(([key, value]) => [
+            `${prefix}.${key}`,
+            value,
+          ])
+        )
+      : config;
+  }, [config, prefix]);
+  const [, setQueryRaw] = useQueryParams(prefixedConfig);
+  const setQuery = useCallback(
+    (
+      update:
+        | Record<string, any>
+        | ((prev: Record<string, any>) => Record<string, any>)
+    ) => {
+      setQueryBase((prev) => {
+        return {
+          ...prev,
+          ...(typeof update === "function" ? update(prev) : update),
+        };
+      });
+    },
+    [setQueryBase]
+  );
+  const helpers = useHelpers(
+    config,
+    setQuery,
+    selfMapper,
+    init
+  ) as ParamsHelpers<T>;
+  const applyQuery = useCallback(() => {
+    setQueryBase((query) => {
+      const queryWithoutDefaults = withoutDefaults(query, config);
+      const result = prefix
+        ? Object.fromEntries(
+            Object.entries(queryWithoutDefaults).map(([key, value]) => [
+              `${prefix}.${key}`,
+              value,
+            ])
+          )
+        : queryWithoutDefaults;
+      setQueryRaw(result);
+      return query;
+    });
+  }, [config, setQueryRaw, prefix]);
+
+  return {
+    query,
+    setQuery,
+    applyQuery,
+    helpers,
+  };
 }

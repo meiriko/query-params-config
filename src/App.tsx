@@ -51,6 +51,9 @@ const Link = ({ to, children, ...props }: { to: To; children: ReactNode }) => {
 };
 
 function BigParams() {
+  // const dbg = useQueryParamHelpers(bigConfig, "miro");
+  // const helpers = dbg.helpers;
+  // helpers.rating.toggle("BAD");
   return (
     <>
       <QueryControls
@@ -59,6 +62,7 @@ function BigParams() {
         prefix="big"
         clearKeys={["ticks", "x"]}
         init={bigInit}
+        commitMode
       />
       <Outlet />
     </>
