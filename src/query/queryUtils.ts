@@ -7,6 +7,7 @@ import {
   encodeDelimitedArray,
   decodeDelimitedArray,
 } from "use-query-params";
+import { pickBy, mapValues, mapKeys } from "lodash";
 
 type ExcludeNullable<T> = Exclude<T, undefined | null>;
 type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
@@ -212,12 +213,11 @@ function useHelpers<T extends Record<string, any>>(
       }
     }) as [string, AnyHelper][];
     const clear = (keys?: string[]) => {
-      const emptyQuery = Object.fromEntries(
-        Object.keys(prefixedConfig)
-          .filter((key) =>
-            keys?.length ? keys.includes(removePrefix(key)) : true
-          )
-          .map((key) => [key, prefixedConfig[key].default])
+      const emptyQuery = mapValues(
+        pickBy(prefixedConfig, (_value, key) =>
+          keys?.length ? keys.includes(removePrefix(key)) : true
+        ),
+        (_value, key) => prefixedConfig[key].default
       );
       setQuery(emptyQuery);
     };
@@ -270,12 +270,7 @@ export function useQueryParamHelpers<T extends Record<string, any>>(
 
   const prefixedConfig = useMemo(() => {
     if (prefix) {
-      return Object.fromEntries(
-        Object.entries(config).map(([key, value]) => [
-          `${prefix}.${key}`,
-          value,
-        ])
-      );
+      return mapKeys(config, (_value, key) => `${prefix}.${key}`);
     } else {
       return config;
     }
@@ -289,10 +284,8 @@ export function useQueryParamHelpers<T extends Record<string, any>>(
     init
   ) as ParamsHelpers<T>;
   const queryWithoutPrefix = useMemo(() => {
-    return Object.fromEntries(
-      Object.entries(query).map(([key, value]) => [removePrefix(key), value])
-    );
-  }, [query, removePrefix]);
+    return prefix ? mapKeys(query, (_value, key) => removePrefix(key)) : query;
+  }, [query, removePrefix, prefix]);
   // const harmonizedQuery = useMemo(() => {
   //   const encodedQuery = encodeQueryParams(
   //     config,
@@ -304,19 +297,14 @@ export function useQueryParamHelpers<T extends Record<string, any>>(
   //   return objectToSearchString(sortedEncodedQuery);
   // }, [queryWithoutPrefix, config]);
 
-  return { query: queryWithoutPrefix, setQuery, helpers };
+  return { query: queryWithoutPrefix, rq: query, setQuery, helpers };
 }
 
 function getInit(
   config: Record<string, QueryParamConfig<any>>,
   init?: Record<string, any>
 ) {
-  return Object.fromEntries(
-    Object.entries(config).map(([key, value]) => [
-      key,
-      init?.[key] || value?.default,
-    ])
-  );
+  return mapValues(config, (value, key) => init?.[key] || value.default);
 }
 
 const selfMapper = (key: string) => key;
@@ -325,11 +313,8 @@ function withoutDefaults(
   query: Record<string, any>,
   config: Record<string, QueryParamConfig<any>>
 ) {
-  return Object.fromEntries(
-    Object.entries(query).map(([key, value]) => [
-      key,
-      value !== config[key].default ? value : undefined,
-    ])
+  return mapValues(query, (value, key) =>
+    value !== config[key].default ? value : undefined
   );
 }
 
@@ -341,12 +326,7 @@ export function useDeferredQueryParamHelpers<T extends Record<string, any>>(
   const [query, setQueryBase] = useState(getInit(config, init));
   const prefixedConfig = useMemo(() => {
     return prefix
-      ? Object.fromEntries(
-          Object.entries(config).map(([key, value]) => [
-            `${prefix}.${key}`,
-            value,
-          ])
-        )
+      ? mapKeys(config, (_value, key) => `${prefix}.${key}`)
       : config;
   }, [config, prefix]);
   const [, setQueryRaw] = useQueryParams(prefixedConfig);
@@ -375,12 +355,7 @@ export function useDeferredQueryParamHelpers<T extends Record<string, any>>(
     setQueryBase((query) => {
       const queryWithoutDefaults = withoutDefaults(query, config);
       const result = prefix
-        ? Object.fromEntries(
-            Object.entries(queryWithoutDefaults).map(([key, value]) => [
-              `${prefix}.${key}`,
-              value,
-            ])
-          )
+        ? mapKeys(queryWithoutDefaults, (_value, key) => `${prefix}.${key}`)
         : queryWithoutDefaults;
       setQueryRaw(result);
       return query;
